@@ -8,10 +8,13 @@ from apscheduler.triggers.cron import CronTrigger
 import re
 import config_factory as cf
 import datetime as dt
-
+import logging
 scheduler = BlockingScheduler()
 
+FORMAT = '%(asctime)s  %(message)s'
+logging.basicConfig(format=FORMAT,level=logging.DEBUG)
 
+log = logging.getLogger(__name__)
 def get_oldest_file(database_name, base_dir):
     filename = None
     oldest_date = None
@@ -50,25 +53,25 @@ def backup():
             count = count + 1
 
     if count >= cf.get_config_value(config, cf.CONFIG_MYSQL, 'max_files'):
-        print("Max file reached")
+        log.info("Max file reached")
         oldest_file = get_oldest_file(database,base_dir)
-        print(f"Removing... {oldest_file}")
+        log.info(f"Removing... {oldest_file}")
         os.remove(os.path.join(base_dir, oldest_file))
 
     filename = f"{database}_{dt.datetime.now().strftime('%Y%m%d%H%M%S')}.gz"
 
-    print("Backupiando...")
+    log.info("Backupiando...")
     #command = f"mysqldump -u {user} -p{passwd} -h {host} --column-statistics=0 -A -R -E --triggers --single-transaction | gzip > {os.path.join(base_dir, filename)}"
     command = f"mysqldump -u {user} -p{passwd} -h {host}  -A -R -E --triggers --single-transaction | gzip > {os.path.join(base_dir, filename)}"
     if cf.get_config_value(config, cf.CONFIG_DEFAULT, 'test_run').lower() == "true":
         with open(os.path.join(base_dir, filename), 'w', encoding="utf-8") as filew:
             filew.write("OPA")
-            print(command)
+            log.info(command)
             return
-    print("Running command....")
-    print(command)
+    log.info("Running command....")
+    log.info(command)
     os.system(command)
-    print("Finished!")
+    log.info("Finished!")
 
 
 def verify_cron_expression(text):
@@ -85,7 +88,7 @@ def verify_cron_expression(text):
 
 
 def run_scheduler():
-    print("Starting Scheduler")
+    log.info("Starting Scheduler")
 
     cfg = cf.generate_config_ini()
     cf.list_config(cfg)
@@ -95,14 +98,14 @@ def run_scheduler():
         if not key.startswith("exp_backup"):
             continue
         if verify_cron_expression(clean_value):
-            print(f"Adding {key}, with {value}")
+            log.info(f"Adding {key}, with {value}")
             trigger = CronTrigger.from_crontab(clean_value)
+            log.info(f"Next run {clean_value} is {trigger.get_next_fire_time(None, dt.datetime.now())}")
             scheduler.add_job(backup, trigger=trigger)
             scheduler_count = scheduler_count + 1
             continue
-        print(f"Invalid expression: {value}")
+        log.info(f"Invalid expression: {value}")
     if scheduler_count > 0:
-        scheduler.print_jobs()
         scheduler.start()
 
 
