@@ -85,11 +85,14 @@ def verify_cron_expression(text):
 
 
 def run_scheduler():
+    print("Starting Scheduler")
+
     cfg = cf.generate_config_ini()
+    cf.list_config(cfg)
     scheduler_count = 0
     for key, value in cfg[cf.CONFIG_CRONS].items():
         clean_value = cf.get_config_value(cfg, cf.CONFIG_CRONS, key)
-        if not key.startswith("cron_backup"):
+        if not key.startswith("exp_backup"):
             continue
         if verify_cron_expression(clean_value):
             print(f"Adding {key}, with {value}")
