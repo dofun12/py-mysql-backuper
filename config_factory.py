@@ -17,6 +17,11 @@ def generate_config_ini():
 
 
 def add_config(config, segment, key, value, isint=False):
+    key = key.upper()
+    print(f"Adding config {key} isint {isint}")
+    env_value = os.getenv(f"{segment}_{key}", None)
+    if env_value is not None:
+        value = env_value
     if isint:
         config[segment][key] = value
         return
@@ -28,16 +33,14 @@ def build_config_default(initial_path):
     _config[CONFIG_DEFAULT] = {}
     add_config(_config, CONFIG_DEFAULT, 'device_id', "py-mysql-backuper")
     add_config(_config, CONFIG_DEFAULT, 'base_dir', "backups")
-
-    test_run = os.getenv("test_run", False)
-    add_config(_config, CONFIG_DEFAULT, 'test_run', test_run)
+    add_config(_config, CONFIG_DEFAULT, 'test_run', False)
 
 
     _config[CONFIG_CRONS] = {}
 
     count = 0
     for cron in range(10):
-        key = f'cron_backup_{cron}'
+        key = f'EXP_BACKUP_{cron}'
         value = os.getenv(key, None)
         if value is None:
             continue
@@ -45,7 +48,7 @@ def build_config_default(initial_path):
         count = count + 1
 
     if count < 1:
-        _config[CONFIG_CRONS]['cron_backup_1'] = "0 20 * * *"
+        add_config(_config, CONFIG_CRONS, 'EXP_BACKUP_1', "0 20 * * *")
 
     _config[CONFIG_MYSQL] = {}
     add_config(_config, CONFIG_MYSQL, 'host', "127.0.0.1")

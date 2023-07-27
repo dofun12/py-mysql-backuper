@@ -31,6 +31,7 @@ def get_oldest_file(database_name, base_dir):
 
 
 def backup():
+    print("Starting backup")
     config = cf.generate_config_ini()
 
     user = cf.get_config_value(config, cf.CONFIG_MYSQL, 'user')
@@ -57,14 +58,17 @@ def backup():
     filename = f"{database}_{dt.datetime.now().strftime('%Y%m%d%H%M%S')}.gz"
 
     print("Backupiando...")
-    command = f"mysqldump -u {user} -p{passwd} -h {host} --column-statistics=0 -A -R -E --triggers --single-transaction | gzip > {os.path.join(base_dir, filename)}"
+    #command = f"mysqldump -u {user} -p{passwd} -h {host} --column-statistics=0 -A -R -E --triggers --single-transaction | gzip > {os.path.join(base_dir, filename)}"
+    command = f"mysqldump -u {user} -p{passwd} -h {host}  -A -R -E --triggers --single-transaction | gzip > {os.path.join(base_dir, filename)}"
     if cf.get_config_value(config, cf.CONFIG_DEFAULT, 'test_run').lower() == "true":
         with open(os.path.join(base_dir, filename), 'w', encoding="utf-8") as filew:
             filew.write("OPA")
             print(command)
             return
-
+    print("Running command....")
     print(command)
+    os.system(command)
+    print("Finished!")
 
 
 def verify_cron_expression(text):
@@ -100,4 +104,5 @@ def run_scheduler():
 
 
 if __name__ == '__main__':
-    backup()
+    #backup()
+    run_scheduler()
