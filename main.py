@@ -58,7 +58,7 @@ def backup():
     filename = f"{database}_{dt.datetime.now().strftime('%Y%m%d%H%M%S')}.gz"
 
     print("Backupiando...")
-    #command = f"mysqldump -u {user} -p{passwd} -h {host} --column-statistics=0 -A -R -E --triggers --single-transaction | gzip > {os.path.join(base_dir, filename)}"
+    # command = f"mysqldump -u {user} -p{passwd} -h {host} --column-statistics=0 -A -R -E --triggers --single-transaction | gzip > {os.path.join(base_dir, filename)}"
     command = f"mysqldump -u {user} -p{passwd} -h {host}  -A -R -E --triggers --single-transaction | gzip > {os.path.join(base_dir, filename)}"
     if cf.get_config_value(config, cf.CONFIG_DEFAULT, 'test_run').lower() == "true":
         with open(os.path.join(base_dir, filename), 'w', encoding="utf-8") as filew:
@@ -79,7 +79,7 @@ def verify_cron_expression(text):
             "(?P<day>\*|0?[1-9]|[12]\d|3[01])",
             "(?P<month>\*|0?[1-9]|1[012])",
             "(?P<day_of_week>\*|[0-6](\-[0-6])?)"
-            )  # end of str.format()
+        )  # end of str.format()
     )  # end of re.compile()
     return validate_crontab_time_format_regex.match(text)
 
