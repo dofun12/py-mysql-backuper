@@ -12,6 +12,7 @@ cron:
 default:
   base_dir: backups
   device_id: py-mysql-backuper
+  only_one_run: false
   test_run: true
 mqtt:
   enabled: false

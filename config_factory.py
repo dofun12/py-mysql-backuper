@@ -31,6 +31,7 @@ def get_defaults():
             'device_id': "py-mysql-backuper",
             'base_dir': "backups",
             'test_run': True,
+            'only_one_run': False
         },
         CONFIG_MYSQL: {
             'host': "127.0.0.1",

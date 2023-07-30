@@ -1,5 +1,6 @@
 # This is a sample Python script.
 import os
+import sys
 
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
@@ -38,13 +39,20 @@ def get_oldest_file(database_name, base_dir):
 
 def backup():
     print("Starting backup")
-    config = cf.get_or_build_config()
+    config = cfg
 
     user = cf.get_config_value(config, cf.CONFIG_MYSQL, 'user')
     host = cf.get_config_value(config, cf.CONFIG_MYSQL, 'host')
     port = cf.get_config_value(config, cf.CONFIG_MYSQL, 'port')
     passwd = cf.get_config_value(config, cf.CONFIG_MYSQL, 'passwd')
     database = cf.get_config_value(config, cf.CONFIG_MYSQL, 'database')
+    mqtt_enabled = cf.get_config_value(config, cf.CONFIG_MQTT, 'enabled')
+    send_topic = cf.get_config_value(config, cf.CONFIG_MQTT, 'send_topic')
+
+    from mqtt_connector import send_mqtt
+
+    if mqtt_enabled:
+        send_mqtt(config, send_topic, f"Starting Backup on host {host}")
 
     base_dir = cf.get_config_value(config, cf.CONFIG_DEFAULT, 'base_dir')
     if not os.path.exists(base_dir):
@@ -75,7 +83,6 @@ def backup():
 
     try:
         import mysql.connector
-        log.info()
         cnx = mysql.connector.connect(user=user, passwd=passwd, host=host, database=database)
         cursor = cnx.cursor(buffered=True)
         cursor.execute("select 1")
@@ -89,6 +96,8 @@ def backup():
     log.info(command)
     os.system(command)
     log.info("Finished!")
+
+
 
 
 def verify_cron_expression(text):
@@ -107,7 +116,7 @@ def verify_cron_expression(text):
 def run_scheduler():
     log.info("Starting Scheduler")
 
-    cfg = cf.get_or_build_config()
+
     scheduler_count = 0
     for key, value in cfg[cf.CONFIG_CRONS].items():
         if value is None:
@@ -125,5 +134,9 @@ def run_scheduler():
 
 
 if __name__ == '__main__':
-    # backup()
+    cfg = cf.get_or_build_config()
+    run_only_one = cf.get_config_value(cfg, cf.CONFIG_DEFAULT, 'only_one_run')
+    if run_only_one:
+        backup()
+        sys.exit(0)
     run_scheduler()
