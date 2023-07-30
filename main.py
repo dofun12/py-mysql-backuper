@@ -42,6 +42,7 @@ def backup():
 
     user = cf.get_config_value(config, cf.CONFIG_MYSQL, 'user')
     host = cf.get_config_value(config, cf.CONFIG_MYSQL, 'host')
+    port = cf.get_config_value(config, cf.CONFIG_MYSQL, 'port')
     passwd = cf.get_config_value(config, cf.CONFIG_MYSQL, 'passwd')
     database = cf.get_config_value(config, cf.CONFIG_MYSQL, 'database')
 
@@ -63,14 +64,27 @@ def backup():
 
     filename = f"{database}_{dt.datetime.now().strftime('%Y%m%d%H%M%S')}.gz"
 
-    log.info("Backupiando...")
+
     # command = f"mysqldump -u {user} -p{passwd} -h {host} --column-statistics=0 -A -R -E --triggers --single-transaction | gzip > {os.path.join(base_dir, filename)}"
-    command = f"mysqldump -u {user} -p{passwd} -h {host}  -A -R -E --triggers --single-transaction | gzip > {os.path.join(base_dir, filename)}"
-    if cf.get_config_value(config, cf.CONFIG_DEFAULT, 'test_run'):
+    command = f"mysqldump -u {user} -p{passwd} -h {host} -P {port} -A -R -E --triggers --single-transaction | gzip > {os.path.join(base_dir, filename)}"
+    if cf.get_config_value(config, cf.CONFIG_DEFAULT, 'test_run') == 'True':
         with open(os.path.join(base_dir, filename), 'w', encoding="utf-8") as filew:
             filew.write("OPA")
             log.info(command)
             return
+
+    try:
+        import mysql.connector
+        log.info()
+        cnx = mysql.connector.connect(user=user, passwd=passwd, host=host, database=database)
+        cursor = cnx.cursor(buffered=True)
+        cursor.execute("select 1")
+        cnx.close()
+    except:
+        log.error(f"Error connecting database {host}:{port}")
+        return
+
+    log.info("Backupiando...")
     log.info("Running command....")
     log.info(command)
     os.system(command)
@@ -111,5 +125,5 @@ def run_scheduler():
 
 
 if __name__ == '__main__':
-    # backup()
-    run_scheduler()
+    backup()
+    # run_scheduler()

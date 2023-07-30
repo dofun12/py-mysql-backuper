@@ -2,3 +2,4 @@ apscheduler
 paho-mqtt
 configparser
 pyyaml
+mysql-connector-python
