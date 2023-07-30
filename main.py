@@ -125,5 +125,5 @@ def run_scheduler():
 
 
 if __name__ == '__main__':
-    backup()
-    # run_scheduler()
+    # backup()
+    run_scheduler()

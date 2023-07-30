@@ -115,7 +115,20 @@ def proccess_env_vars():
             if key not in hot_config:
                 hot_config[key] = {}
 
+            if subvalue is None:
+                hot_config[key][subkey] = hot_value
+                continue
+
+            if type(subvalue) is int:
+                hot_config[key][subkey] = int(hot_value)
+                continue
+
+            if type(subvalue) is bool:
+                hot_config[key][subkey] = bool(hot_value)
+                continue
+
             hot_config[key][subkey] = hot_value
+
     return hot_config
 
 
