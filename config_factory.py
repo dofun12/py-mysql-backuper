@@ -170,4 +170,5 @@ def list_config_by_segment(config, segment):
         print(key, value)
 
 
-print(get_or_build_config())
+if __name__ == '__main__':
+    print(get_or_build_config())
