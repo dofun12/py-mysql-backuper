@@ -1,5 +1,7 @@
 config.ini
 local.ini
+backups/**
+configs/config.yaml
 /.idea/misc.xml
 /.idea/modules.xml
 /.idea/inspectionProfiles/profiles_settings.xml

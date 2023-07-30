@@ -1,0 +1,29 @@
+cron:
+  expression_0: 0 0 * * *
+  expression_1: null
+  expression_2: null
+  expression_3: null
+  expression_4: null
+  expression_5: null
+  expression_6: null
+  expression_7: null
+  expression_8: null
+  expression_9: null
+default:
+  base_dir: backups
+  device_id: py-mysql-backuper
+  test_run: true
+mqtt:
+  enabled: false
+  host: 127.0.0.1
+  passwd: root
+  port: 1883
+  send_topic: events/mysql/backup_start
+  user: root
+mysql:
+  database: default
+  host: 127.0.0.1
+  max_files: 10
+  passwd: root
+  port: 3306
+  user: root

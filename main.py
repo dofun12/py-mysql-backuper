@@ -9,12 +9,15 @@ import re
 import config_factory as cf
 import datetime as dt
 import logging
+
 scheduler = BlockingScheduler()
 
 FORMAT = '%(asctime)s  %(message)s'
-logging.basicConfig(format=FORMAT,level=logging.DEBUG)
+logging.basicConfig(format=FORMAT, level=logging.DEBUG)
 
 log = logging.getLogger(__name__)
+
+
 def get_oldest_file(database_name, base_dir):
     filename = None
     oldest_date = None
@@ -35,7 +38,7 @@ def get_oldest_file(database_name, base_dir):
 
 def backup():
     print("Starting backup")
-    config = cf.generate_config_ini()
+    config = cf.get_or_build_config()
 
     user = cf.get_config_value(config, cf.CONFIG_MYSQL, 'user')
     host = cf.get_config_value(config, cf.CONFIG_MYSQL, 'host')
@@ -54,16 +57,16 @@ def backup():
 
     if count >= cf.get_config_value(config, cf.CONFIG_MYSQL, 'max_files'):
         log.info("Max file reached")
-        oldest_file = get_oldest_file(database,base_dir)
+        oldest_file = get_oldest_file(database, base_dir)
         log.info(f"Removing... {oldest_file}")
         os.remove(os.path.join(base_dir, oldest_file))
 
     filename = f"{database}_{dt.datetime.now().strftime('%Y%m%d%H%M%S')}.gz"
 
     log.info("Backupiando...")
-    #command = f"mysqldump -u {user} -p{passwd} -h {host} --column-statistics=0 -A -R -E --triggers --single-transaction | gzip > {os.path.join(base_dir, filename)}"
+    # command = f"mysqldump -u {user} -p{passwd} -h {host} --column-statistics=0 -A -R -E --triggers --single-transaction | gzip > {os.path.join(base_dir, filename)}"
     command = f"mysqldump -u {user} -p{passwd} -h {host}  -A -R -E --triggers --single-transaction | gzip > {os.path.join(base_dir, filename)}"
-    if cf.get_config_value(config, cf.CONFIG_DEFAULT, 'test_run').lower() == "true":
+    if cf.get_config_value(config, cf.CONFIG_DEFAULT, 'test_run'):
         with open(os.path.join(base_dir, filename), 'w', encoding="utf-8") as filew:
             filew.write("OPA")
             log.info(command)
@@ -90,25 +93,23 @@ def verify_cron_expression(text):
 def run_scheduler():
     log.info("Starting Scheduler")
 
-    cfg = cf.generate_config_ini()
-    cf.list_config(cfg)
+    cfg = cf.get_or_build_config()
     scheduler_count = 0
     for key, value in cfg[cf.CONFIG_CRONS].items():
+        if value is None:
+            continue
+
         clean_value = cf.get_config_value(cfg, cf.CONFIG_CRONS, key)
-        if not key.startswith("exp_backup"):
-            continue
-        if verify_cron_expression(clean_value):
-            log.info(f"Adding {key}, with {value}")
-            trigger = CronTrigger.from_crontab(clean_value)
-            log.info(f"Next run {clean_value} is {trigger.get_next_fire_time(None, dt.datetime.now())}")
-            scheduler.add_job(backup, trigger=trigger)
-            scheduler_count = scheduler_count + 1
-            continue
-        log.info(f"Invalid expression: {value}")
+        log.info(f"Adding {key}, with {value}")
+        trigger = CronTrigger.from_crontab(clean_value)
+        log.info(f"Next execution of {key} ({clean_value}) is {trigger.get_next_fire_time(None, dt.datetime.now())}")
+        scheduler.add_job(backup, trigger=trigger, name=key)
+        scheduler_count = scheduler_count + 1
+
     if scheduler_count > 0:
         scheduler.start()
 
 
 if __name__ == '__main__':
-    #backup()
+    # backup()
     run_scheduler()
